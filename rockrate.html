@@ -319,6 +319,77 @@
   .hero-stage .rock-holder:hover #heroRockHover{
     opacity:1 !important;
   }
+
+  /* ---------- Auth & Camera UI ---------- */
+  .auth-nav{display:flex;align-items:center;gap:10px;}
+  .user-pill{
+    display:flex;align-items:center;gap:8px;
+    background:var(--quartz);
+    border:1px solid var(--slate-line);
+    padding:4px 12px 4px 6px;
+    border-radius:100px;
+    font-size:0.86rem;
+    font-weight:600;
+  }
+  .user-pill .user-avatar{
+    width:24px;height:24px;border-radius:50%;
+    background:var(--sandstone);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+  }
+  .btn-logout{
+    background:none;border:none;color:var(--slate);
+    font-size:0.8rem;cursor:pointer;padding:2px 6px;
+    text-decoration:underline;border-radius:4px;
+  }
+  .btn-logout:hover{color:var(--clay);}
+  .nav-login-link{
+    font-size:0.9rem;font-weight:600;color:var(--clay);
+    text-decoration:none;padding:6px 14px;
+    border:1.5px solid var(--clay);border-radius:100px;
+    transition:all .15s ease;
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .nav-login-link:hover{
+    background:var(--clay);color:var(--quartz);
+  }
+  .upload-mode-toggle{display:flex;gap:8px;margin-bottom:12px;}
+  .btn-mode{
+    flex:1;padding:8px 12px;background:var(--quartz);
+    border:1.5px solid var(--slate-line);border-radius:6px;
+    font-size:0.88rem;font-weight:600;color:var(--basalt);
+    cursor:pointer;transition:all .15s ease;
+  }
+  .btn-mode.active{
+    background:var(--basalt);color:var(--quartz);border-color:var(--basalt);
+  }
+  .cam-container{
+    position:relative;background:#151412;border-radius:6px;
+    overflow:hidden;margin-bottom:12px;display:none;
+    text-align:center;
+  }
+  .cam-video{
+    width:100%;max-height:260px;object-fit:cover;display:block;
+  }
+  .cam-controls{
+    position:absolute;bottom:10px;left:0;right:0;
+    display:flex;justify-content:center;gap:10px;padding:0 10px;z-index:5;
+  }
+  .btn-snap{
+    background:var(--clay);color:#fff;border:none;
+    border-radius:100px;padding:8px 18px;font-weight:600;
+    font-size:0.9rem;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  }
+  .btn-snap:hover{background:var(--clay-deep);}
+  .btn-cam-close{
+    background:rgba(33,31,28,0.75);color:#fff;border:1px solid rgba(255,255,255,0.25);
+    border-radius:100px;padding:8px 14px;font-size:0.85rem;cursor:pointer;
+  }
+  .btn-cam-close:hover{background:rgba(33,31,28,0.95);}
+  .submitted-by-tag{
+    display:inline-block;color:var(--clay);font-weight:600;
+  }
+
 </style>
 </head>
 <body>
@@ -332,6 +403,7 @@
     <nav class="nav-links">
       <a href="#leaderboard">Leaderboard</a>
       <a href="#feed">Browse</a>
+      <div id="authNav" class="auth-nav"></div>
       <button class="btn btn-primary" id="openAddBtn">Submit a rock</button>
     </nav>
   </div>
@@ -395,10 +467,24 @@
   <div class="modal">
     <h3>Submit your rock</h3>
     <p class="modal-sub">Give it a name. Let it be judged.</p>
+    <div class="upload-mode-toggle">
+      <button type="button" class="btn-mode active" id="modeFileBtn">📁 Upload File</button>
+      <button type="button" class="btn-mode" id="modeCamBtn">📷 Open Camera</button>
+    </div>
+
+    <div class="cam-container" id="camContainer">
+      <video class="cam-video" id="cameraVideo" autoplay playsinline muted></video>
+      <div class="cam-controls">
+        <button type="button" class="btn-snap" id="snapPhotoBtn">📸 Take Photo</button>
+        <button type="button" class="btn-cam-close" id="closeCamBtn">Close Camera</button>
+      </div>
+    </div>
+
     <div class="drop" id="dropZone">
       <span id="dropLabel">Click to upload a photo, or drag one here</span>
       <input type="file" accept="image/*" id="fileInput">
     </div>
+    <canvas id="compressCanvas" style="display:none;"></canvas>
     <div class="field">
       <label for="rockName">Name</label>
       <input type="text" id="rockName" placeholder="e.g. Big Gerald" maxlength="40">
@@ -639,7 +725,7 @@
           + '</div>'
           + (r.caption ? '<div class="feed-caption">'+escapeHtml(r.caption)+'</div>' : '')
           + '<div class="feed-footer">'
-            + '<span class="feed-sub">Added '+timeAgo(r.createdAt)+'</span>'
+            + '<span class="feed-sub">Added '+timeAgo(r.createdAt)+(r.submittedBy ? ' · by <span class="submitted-by-tag">@'+escapeHtml(r.submittedBy)+'</span>' : '')+'</span>'
             + removeButton(r, false)
           + '</div>'
         + '</div>'
@@ -718,6 +804,68 @@
   });
 
   // ---------- Modal ----------
+  // ---------- Auth & Camera Controller ----------
+  const USER_KEY = 'rockrate-current-user-v1';
+  let currentUser = null;
+
+  function loadCurrentUser(){
+    try{
+      const data = localStorage.getItem(USER_KEY);
+      currentUser = data ? JSON.parse(data) : null;
+    }catch(e){
+      currentUser = null;
+    }
+    renderAuthNav();
+  }
+
+  function renderAuthNav(){
+    const authNav = document.getElementById('authNav');
+    if(!authNav) return;
+    if(currentUser){
+      authNav.innerHTML = '<div class="user-pill">'
+        + '<span class="user-avatar">' + (currentUser.avatar || '🗿') + '</span>'
+        + '<span>@' + escapeHtml(currentUser.username) + '</span>'
+        + '<button type="button" class="btn-logout" id="logoutBtn" title="Log out">Log out</button>'
+        + '</div>';
+      const logoutBtn = document.getElementById('logoutBtn');
+      if(logoutBtn){
+        logoutBtn.addEventListener('click', function(){
+          localStorage.removeItem(USER_KEY);
+          currentUser = null;
+          renderAuthNav();
+          showToast('Logged out.');
+        });
+      }
+    } else {
+      authNav.innerHTML = '<a href="login.html" class="nav-login-link">👤 Log In</a>';
+    }
+  }
+
+  // Image compressor to ensure localStorage never hits quota
+  function compressImage(imgSource, maxWidth, quality, callback){
+    const canvas = document.getElementById('compressCanvas') || document.createElement('canvas');
+    let width = imgSource.videoWidth || imgSource.naturalWidth || imgSource.width;
+    let height = imgSource.videoHeight || imgSource.naturalHeight || imgSource.height;
+
+    if(!width || !height){
+      callback(null);
+      return;
+    }
+
+    if(width > maxWidth){
+      height = Math.round((height * maxWidth) / width);
+      width = maxWidth;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgSource, 0, 0, width, height);
+    const dataUrl = canvas.toDataURL('image/jpeg', quality || 0.82);
+    callback(dataUrl);
+  }
+
+  // ---------- Modal & Camera Management ----------
   const overlay = document.getElementById('overlay');
   const dropZone = document.getElementById('dropZone');
   const dropLabel = document.getElementById('dropLabel');
@@ -725,14 +873,106 @@
   const rockNameInput = document.getElementById('rockName');
   const rockCaptionInput = document.getElementById('rockCaption');
   const formMsg = document.getElementById('formMsg');
+  const camContainer = document.getElementById('camContainer');
+  const cameraVideo = document.getElementById('cameraVideo');
+  const snapPhotoBtn = document.getElementById('snapPhotoBtn');
+  const closeCamBtn = document.getElementById('closeCamBtn');
+  const modeFileBtn = document.getElementById('modeFileBtn');
+  const modeCamBtn = document.getElementById('modeCamBtn');
   let pendingImage = null;
+  let mediaStream = null;
+
+  async function startCamera(){
+    try{
+      stopCamera();
+      formMsg.textContent = 'Requesting camera access…';
+      const constraints = {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      cameraVideo.srcObject = mediaStream;
+      camContainer.style.display = 'block';
+      modeCamBtn.classList.add('active');
+      modeFileBtn.classList.remove('active');
+      formMsg.textContent = '';
+    } catch(err){
+      console.warn('Camera error:', err);
+      formMsg.textContent = 'Could not access camera (' + (err.message || 'permission denied') + '). Please use file upload.';
+      camContainer.style.display = 'none';
+      modeFileBtn.classList.add('active');
+      modeCamBtn.classList.remove('active');
+    }
+  }
+
+  function stopCamera(){
+    if(mediaStream){
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+    if(cameraVideo) cameraVideo.srcObject = null;
+    if(camContainer) camContainer.style.display = 'none';
+  }
+
+  if(modeFileBtn){
+    modeFileBtn.addEventListener('click', function(){
+      stopCamera();
+      modeFileBtn.classList.add('active');
+      modeCamBtn.classList.remove('active');
+    });
+  }
+
+  if(modeCamBtn){
+    modeCamBtn.addEventListener('click', function(){
+      startCamera();
+    });
+  }
+
+  if(closeCamBtn){
+    closeCamBtn.addEventListener('click', function(){
+      stopCamera();
+      modeFileBtn.classList.add('active');
+      modeCamBtn.classList.remove('active');
+    });
+  }
+
+  if(snapPhotoBtn){
+    snapPhotoBtn.addEventListener('click', function(){
+      if(!mediaStream || !cameraVideo.videoWidth){
+        formMsg.textContent = 'Camera is not ready yet.';
+        return;
+      }
+      compressImage(cameraVideo, 800, 0.84, function(compressedUrl){
+        if(compressedUrl){
+          pendingImage = compressedUrl;
+          dropZone.classList.add('has-image');
+          dropZone.innerHTML = '<img src="'+pendingImage+'" alt="Captured Rock Preview"><input type="file" accept="image/*" id="fileInput">';
+          rebindFileInput();
+          stopCamera();
+          modeFileBtn.classList.add('active');
+          modeCamBtn.classList.remove('active');
+          formMsg.textContent = 'Rock photo captured! Enter details and submit.';
+        } else {
+          formMsg.textContent = 'Failed to capture frame.';
+        }
+      });
+    });
+  }
 
   function openModal(){
     overlay.classList.add('open');
     formMsg.textContent = '';
+    if(currentUser){
+      formMsg.textContent = 'Submitting as @' + currentUser.username;
+    }
   }
   function closeModal(){
     overlay.classList.remove('open');
+    stopCamera();
     pendingImage = null;
     rockNameInput.value = '';
     rockCaptionInput.value = '';
@@ -740,11 +980,15 @@
     dropZone.classList.remove('has-image');
     dropZone.innerHTML = '<span id="dropLabel">Click to upload a photo, or drag one here</span><input type="file" accept="image/*" id="fileInput">';
     rebindFileInput();
+    if(modeFileBtn && modeCamBtn){
+      modeFileBtn.classList.add('active');
+      modeCamBtn.classList.remove('active');
+    }
   }
 
   function rebindFileInput(){
     const input = document.getElementById('fileInput');
-    input.addEventListener('change', handleFile);
+    if(input) input.addEventListener('change', handleFile);
   }
   rebindFileInput();
 
@@ -757,10 +1001,19 @@
     }
     const reader = new FileReader();
     reader.onload = function(ev){
-      pendingImage = ev.target.result;
-      dropZone.classList.add('has-image');
-      dropZone.innerHTML = '<img src="'+pendingImage+'" alt="Preview"><input type="file" accept="image/*" id="fileInput">';
-      rebindFileInput();
+      const rawUrl = ev.target.result;
+      // Compress uploaded file to keep within localStorage quota
+      const tempImg = new Image();
+      tempImg.onload = function(){
+        compressImage(tempImg, 800, 0.84, function(comp){
+          pendingImage = comp || rawUrl;
+          dropZone.classList.add('has-image');
+          dropZone.innerHTML = '<img src="'+pendingImage+'" alt="Preview"><input type="file" accept="image/*" id="fileInput">';
+          rebindFileInput();
+          formMsg.textContent = 'Photo ready.';
+        });
+      };
+      tempImg.src = rawUrl;
     };
     reader.readAsDataURL(file);
   }
@@ -787,19 +1040,26 @@
     if(!name){ formMsg.textContent = 'Give your rock a name.'; return; }
     if(!pendingImage){ formMsg.textContent = 'Add a photo — this is a visual medium.'; return; }
 
+    const submitter = currentUser ? currentUser.username : 'Anonymous';
     const newRock = {
       id: uid(),
       name: name,
       caption: rockCaptionInput.value.trim(),
       image: pendingImage,
+      submittedBy: submitter,
       likes: 0,
       createdAt: Date.now()
     };
-    rocks.push(newRock);
+    rocks.unshift(newRock);
     renderAll();
     closeModal();
-    await saveRocks();
-    showToast('Rock added. Let the judging begin.');
+    try{
+      await saveRocks();
+      showToast('Rock added by @' + submitter + '. Let the judging begin.');
+    }catch(err){
+      console.error(err);
+      showToast('Rock added to feed.');
+    }
     document.getElementById('feed').scrollIntoView({behavior:'smooth'});
   });
 
@@ -834,6 +1094,7 @@
     });
   }
 
+  loadCurrentUser();
   loadData().then(renderAll).catch(function(err){
     document.getElementById('loadingBoard').textContent = 'Could not load rankings right now.';
     console.error(err);

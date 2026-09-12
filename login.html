@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In & Sign Up — ശിലായുഗം</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --basalt:#211F1C;
+    --basalt-soft:#3A362F;
+    --sandstone:#EDE3CC;
+    --quartz:#FAF7F0;
+    --clay:#A8562E;
+    --clay-deep:#7C3F20;
+    --slate:#6B6459;
+    --slate-line:#D8CBAE;
+    --card-radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--sandstone);
+    color:var(--basalt);
+    font-family:'Work Sans', sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    color:var(--basalt);
+    margin:0;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* Header */
+  header.site{
+    background:rgba(237,227,204,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--slate-line);
+  }
+  .site-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;max-width:1120px;margin:0 auto;
+  }
+  .logo{
+    font-family:'Fraunces', serif;
+    font-weight:900;font-size:1.4rem;
+    display:flex;align-items:center;gap:9px;
+  }
+  .logo-mark{width:26px;height:26px;flex:none;}
+  .nav-links{display:flex;gap:14px;align-items:center;}
+  .nav-links a{
+    font-size:0.92rem;font-weight:600;color:var(--basalt-soft);
+    padding:8px 4px;
+  }
+  .nav-links a:hover{color:var(--clay);}
+
+  /* Auth Container */
+  .auth-wrap{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    padding:40px 20px;
+  }
+  .auth-card{
+    background:var(--quartz);
+    border:1px solid var(--slate-line);
+    border-radius:12px;
+    box-shadow:0 12px 30px rgba(33,31,28,0.08);
+    width:100%;max-width:440px;
+    padding:32px 28px;
+  }
+  .auth-header{text-align:center;margin-bottom:22px;}
+  .auth-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:52px;height:52px;border-radius:50%;
+    background:#F4EFE1;border:1.5px solid var(--slate-line);
+    margin-bottom:12px;font-size:1.6rem;
+  }
+  .auth-header h1{font-size:1.75rem;margin-bottom:4px;}
+  .auth-header p{color:var(--slate);font-size:0.88rem;margin:0;}
+
+  /* Tab switcher */
+  .auth-tabs{
+    display:flex;background:#F4EFE1;border:1px solid var(--slate-line);
+    border-radius:100px;padding:3px;margin-bottom:22px;
+  }
+  .auth-tab{
+    flex:1;border:none;background:none;border-radius:100px;
+    padding:9px 12px;font-size:0.9rem;font-weight:600;color:var(--slate);
+    transition:all .18s ease;text-align:center;
+  }
+  .auth-tab.active{
+    background:var(--quartz);color:var(--basalt);
+    box-shadow:0 2px 6px rgba(33,31,28,0.08);
+  }
+
+  /* Form */
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-size:0.84rem;font-weight:600;
+    color:var(--basalt-soft);margin-bottom:6px;
+  }
+  .input-wrap{position:relative;display:flex;align-items:center;}
+  .input-wrap input{
+    width:100%;background:#fff;border:1.5px solid var(--slate-line);
+    border-radius:6px;padding:10px 14px;font-family:inherit;
+    font-size:0.95rem;color:var(--basalt);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .input-wrap input:focus{
+    outline:none;border-color:var(--clay);
+    box-shadow:0 0 0 3px rgba(168,86,46,0.15);
+  }
+  .toggle-pwd{
+    position:absolute;right:10px;background:none;border:none;
+    color:var(--slate);font-size:0.8rem;font-weight:600;
+    cursor:pointer;padding:4px 6px;
+  }
+  .toggle-pwd:hover{color:var(--basalt);}
+
+  /* Avatar picker */
+  .avatar-row{
+    display:flex;gap:10px;margin-top:4px;margin-bottom:14px;
+  }
+  .avatar-choice{
+    flex:1;border:1.5px solid var(--slate-line);background:#fff;
+    border-radius:8px;padding:8px;font-size:1.3rem;text-align:center;
+    cursor:pointer;transition:all .15s ease;
+  }
+  .avatar-choice.selected{
+    border-color:var(--clay);background:#FBF6E9;
+    box-shadow:0 0 0 2px rgba(168,86,46,0.2);
+  }
+
+  .btn{
+    border:none;border-radius:100px;padding:12px 22px;
+    font-weight:600;font-size:0.98rem;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:all .15s ease;width:100%;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--clay);color:var(--quartz);}
+  .btn-primary:hover{background:var(--clay-deep);}
+  .btn-demo{
+    background:#F4EFE1;color:var(--basalt);border:1.5px solid var(--slate-line);
+    margin-top:10px;font-size:0.86rem;padding:9px 16px;
+  }
+  .btn-demo:hover{background:#EDE3CC;}
+
+  .form-msg{
+    font-size:0.85rem;border-radius:6px;padding:8px 12px;
+    margin-bottom:16px;display:none;
+  }
+  .form-msg.error{
+    color:#b91c1c;background:#fee2e2;border:1px solid #fca5a5;display:block;
+  }
+  .form-msg.success{
+    color:#15803d;background:#dcfce7;border:1px solid #86efac;display:block;
+  }
+
+  .auth-footer{
+    text-align:center;margin-top:20px;padding-top:16px;
+    border-top:1px solid var(--slate-line);font-size:0.86rem;color:var(--slate);
+  }
+  .auth-footer a{color:var(--clay);font-weight:600;}
+  .auth-footer a:hover{text-decoration:underline;}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--basalt);color:var(--quartz);padding:12px 22px;border-radius:100px;
+    font-size:0.9rem;font-weight:600;opacity:0;transition:all .25s ease;z-index:90;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-bar">
+    <a class="logo" href="index.html">
+      <svg class="logo-mark" viewBox="0 0 26 26"><polygon points="5,4 16,2 24,10 22,19 13,24 4,18 2,9" fill="#A8562E"/></svg>
+      ശിലായുഗം
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#leaderboard">Leaderboard</a>
+      <a href="index.html#feed">Browse</a>
+      <a href="index.html">Back to Home</a>
+    </nav>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-badge" id="headerBadge">🪨</div>
+      <h1 id="headerTitle">Welcome Back</h1>
+      <p id="headerSub">Sign in to submit, rate, and manage your stones.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignIn">Sign In</button>
+      <button class="auth-tab" id="tabSignUp">Create Account</button>
+    </div>
+
+    <div class="form-msg" id="formMsg"></div>
+
+    <!-- Sign In Form -->
+    <form id="signInForm">
+      <div class="field">
+        <label for="loginIdentifier">Username or Email</label>
+        <div class="input-wrap">
+          <input type="text" id="loginIdentifier" placeholder="e.g. GeodeGeorge" required autocomplete="username">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+          <button type="button" class="toggle-pwd" id="toggleLoginPwd">Show</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Sign In</button>
+      <button type="button" class="btn btn-demo" id="demoBtn">⚡ Try Demo Account (RockyRoad)</button>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signUpForm" style="display:none;">
+      <div class="field">
+        <label for="signupUsername">Username</label>
+        <div class="input-wrap">
+          <input type="text" id="signupUsername" placeholder="e.g. GraniteGreg" maxlength="24" required autocomplete="username">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="signupEmail">Email</label>
+        <div class="input-wrap">
+          <input type="email" id="signupEmail" placeholder="greg@example.com" required autocomplete="email">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="signupPassword">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="signupPassword" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
+          <button type="button" class="toggle-pwd" id="toggleSignupPwd">Show</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Choose Your Rock Badge</label>
+        <div class="avatar-row">
+          <button type="button" class="avatar-choice selected" data-avatar="🪨" title="Classic Boulder">🪨</button>
+          <button type="button" class="avatar-choice" data-avatar="💎" title="Crystal Gem">💎</button>
+          <button type="button" class="avatar-choice" data-avatar="🌋" title="Volcanic Basalt">🌋</button>
+          <button type="button" class="avatar-choice" data-avatar="🗿" title="Ancient Monolith">🗿</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Create Account</button>
+    </form>
+
+    <div class="auth-footer" id="authFooterText">
+      New to ശിലായുഗം? <a href="#" id="switchModeLink">Create an account</a>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const USERS_KEY = "rockrate-users-v1";
+  const CURRENT_USER_KEY = "rockrate-current-user-v1";
+
+  const tabSignIn = document.getElementById('tabSignIn');
+  const tabSignUp = document.getElementById('tabSignUp');
+  const signInForm = document.getElementById('signInForm');
+  const signUpForm = document.getElementById('signUpForm');
+  const formMsg = document.getElementById('formMsg');
+  const headerTitle = document.getElementById('headerTitle');
+  const headerSub = document.getElementById('headerSub');
+  const switchModeLink = document.getElementById('switchModeLink');
+  const demoBtn = document.getElementById('demoBtn');
+
+  let selectedAvatar = '🪨';
+
+  function setMode(mode){
+    formMsg.className = 'form-msg';
+    formMsg.textContent = '';
+    if(mode === 'signup'){
+      tabSignUp.classList.add('active');
+      tabSignIn.classList.remove('active');
+      signInForm.style.display = 'none';
+      signUpForm.style.display = 'block';
+      headerTitle.textContent = 'Join ശിലായുഗം';
+      headerSub.textContent = 'Create your account to showcase & rate rocks.';
+      switchModeLink.textContent = 'Already have an account? Sign in';
+    } else {
+      tabSignIn.classList.add('active');
+      tabSignUp.classList.remove('active');
+      signInForm.style.display = 'block';
+      signUpForm.style.display = 'none';
+      headerTitle.textContent = 'Welcome Back';
+      headerSub.textContent = 'Sign in to submit, rate, and manage your stones.';
+      switchModeLink.textContent = "New to ശിലായുഗം? Create an account";
+    }
+  }
+
+  tabSignIn.addEventListener('click', () => setMode('signin'));
+  tabSignUp.addEventListener('click', () => setMode('signup'));
+  switchModeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    setMode(signInForm.style.display === 'none' ? 'signin' : 'signup');
+  });
+
+  // Password visibility
+  function setupToggle(btnId, inputId){
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    btn.addEventListener('click', function(){
+      if(input.type === 'password'){
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
+    });
+  }
+  setupToggle('toggleLoginPwd', 'loginPassword');
+  setupToggle('toggleSignupPwd', 'signupPassword');
+
+  // Avatar picker
+  document.querySelectorAll('.avatar-choice').forEach(btn => {
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.avatar-choice').forEach(b => b.classList.remove('selected'));
+      this.classList.add('selected');
+      selectedAvatar = this.getAttribute('data-avatar');
+      document.getElementById('headerBadge').textContent = selectedAvatar;
+    });
+  });
+
+  function getUsers(){
+    try{
+      const d = localStorage.getItem(USERS_KEY);
+      return d ? JSON.parse(d) : [];
+    }catch(e){ return []; }
+  }
+  function saveUsers(users){
+    try{ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }catch(e){}
+  }
+  function setCurrentUser(u){
+    try{ localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(u)); }catch(e){}
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // Demo account
+  demoBtn.addEventListener('click', function(){
+    document.getElementById('loginIdentifier').value = 'RockyRoad';
+    document.getElementById('loginPassword').value = 'granite123';
+    showToast('Demo credentials filled!');
+  });
+
+  // Sign In Handler
+  signInForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const identifier = document.getElementById('loginIdentifier').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if(identifier.toLowerCase() === 'rockyroad' && password === 'granite123'){
+      const demoUser = { username: 'RockyRoad', email: 'rocky@rockrate.com', avatar: '🪨', joinedAt: Date.now() };
+      setCurrentUser(demoUser);
+      showToast('Logged in as RockyRoad!');
+      setTimeout(() => { window.location.href = 'index.html?auth=success'; }, 600);
+      return;
+    }
+
+    const users = getUsers();
+    const user = users.find(u =>
+      (u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase())
+      && u.password === password
+    );
+
+    if(!user){
+      formMsg.className = 'form-msg error';
+      formMsg.textContent = 'Invalid username/email or password.';
+      return;
+    }
+
+    setCurrentUser({
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar || '🪨',
+      joinedAt: user.joinedAt || Date.now()
+    });
+
+    showToast('Welcome back, ' + user.username + '!');
+    setTimeout(() => { window.location.href = 'index.html?auth=success'; }, 600);
+  });
+
+  // Sign Up Handler
+  signUpForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const username = document.getElementById('signupUsername').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+
+    if(!username || !email || !password){
+      formMsg.className = 'form-msg error';
+      formMsg.textContent = 'All fields are required.';
+      return;
+    }
+
+    const users = getUsers();
+    if(users.some(u => u.username.toLowerCase() === username.toLowerCase())){
+      formMsg.className = 'form-msg error';
+      formMsg.textContent = 'This username is already taken. Try another.';
+      return;
+    }
+    if(users.some(u => u.email.toLowerCase() === email.toLowerCase())){
+      formMsg.className = 'form-msg error';
+      formMsg.textContent = 'An account with this email already exists.';
+      return;
+    }
+
+    const newUser = {
+      username: username,
+      email: email,
+      password: password,
+      avatar: selectedAvatar,
+      joinedAt: Date.now()
+    };
+    users.push(newUser);
+    saveUsers(users);
+
+    setCurrentUser({
+      username: newUser.username,
+      email: newUser.email,
+      avatar: newUser.avatar,
+      joinedAt: newUser.joinedAt
+    });
+
+    showToast('Account created! Welcome to ശിലായുഗം.');
+    setTimeout(() => { window.location.href = 'index.html?auth=success'; }, 700);
+  });
+
+  // Check URL query to open signup directly if needed
+  if(window.location.hash === '#signup' || window.location.search.includes('mode=signup')){
+    setMode('signup');
+  }
+})();
+</script>
+</body>
+</html>
