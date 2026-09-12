@@ -2,15 +2,15 @@
 
 
 
-# [SHILAYUGAM] 🎯
+# SHILAYUGAM 🎯
 
 ## Basic Details
-### Team Name: [EVOQUE]
+### Team Name: EVOQUE
 
 
 ### Team Members
-- Team Lead: [Name] - [MOHAMMED YASIN P SAJIL]
-- Member 2: [Name] - [YUAAN JO ANTONY]
+- Team Lead: - MOHAMMED YASIN P SAJIL
+- Member 2:  - YUAAN JO ANTONY
 
 ### Project Description
 [ശിലായുഗം (Stone Age) is a lighthearted, aesthetic web application dedicated to the sincere art of rating and appreciating rocks.
